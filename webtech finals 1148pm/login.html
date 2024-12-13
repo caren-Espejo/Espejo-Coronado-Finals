@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Poiret+One&family=Protest+Guerrilla&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Poiret+One&family=Protest+Guerrilla&display=swap" rel="stylesheet">
+    <title>Session-Admin</title>
+    <style>
+        body {
+            background-image: url('finalogin.png');
+            background-repeat: no-repeat;
+            color: #fff;
+            display: flex;
+            background-position: center;
+            background-attachment: fixed;
+            background-size: cover;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #login-page, #protected-page {
+            color: #333;
+            background-color: rgba(10, 8, 5, 0.758);
+            border-radius: 10px;
+            max-width: 500px;
+            height: 550px;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            margin-left: 800px;
+            opacity: 100%;
+        }
+        h2 {
+            margin-bottom: 40px;
+            color: rgb(214, 209, 199);
+            font-size: 40px;
+            text-shadow: 2px 2px 5px rgb(63, 48, 48);
+            font-family: "Anton", sans-serif;
+            letter-spacing: 3px;
+        }
+        h3{
+            color: white;
+            font-size: 20px;
+            font-family: "Poiret One", sans-serif;
+        }
+        input {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            width: 90%;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            width: 50%;
+            margin: 10px auto;
+            border: none;
+            border-radius: 5px;
+            background: #6e6241;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #333333;
+        }
+        .hidden {
+            display: none;
+        }
+        .messages {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #logout-btn {
+            background: #d9534f;
+        }
+        #logout-btn:hover {
+            background: #c9302c;
+        }
+        #error {
+            color: #d9534f;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page">
+        <h2>Login</h2>
+        <h3>Admin username: admin <br> Admin password: panedaria <br><br> Username: user <br> User password: userpass</h3>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="login-btn">Login</button>
+        <p id="error" style="display: none;">Invalid credentials, try again.</p>
+    </div>
+
+    <!-- Admin Page -->
+    <div id="admin-page" class="hidden">
+        <h2>Admin Dashboard</h2>
+        <p>Welcome, Admin!</p>
+        <button id="admin-logout-btn">Logout</button>
+    </div>
+
+    <!-- User Page -->
+    <div id="user-page" class="hidden">
+        <h2>User Ordering Page</h2>
+        <p>Welcome, User!</p>
+        <button id="user-logout-btn">Logout</button>
+    </div>
+
+    <script>
+        const validAdmin = { username: "admin", password: "panedaria" };
+        const validUser  = { username: "user", password: "userpass" };
+
+        const loginPage = document.getElementById('login-page');
+        const adminPage = document.getElementById('admin-page');
+        const userPage = document.getElementById('user-page');
+        const loginBtn = document.getElementById('login-btn');
+        const adminLogoutBtn = document.getElementById('admin-logout-btn');
+        const userLogoutBtn = document.getElementById('user-logout-btn');
+        const error = document.getElementById('error');
+
+        loginBtn.addEventListener('click', () => {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (username === validAdmin.username && password === validAdmin.password) {
+        window.location.href = 'admin.html'; // Redirect to admin page
+ } else if (username === validUser .username && password === validUser .password) {
+        window.location.href = 'user.html'; // Redirect to user page
+    } else {
+        error.style.display = 'block';
+    }
+});
+
+        adminLogoutBtn.addEventListener('click', () => {
+            adminPage.classList.add('hidden');
+            loginPage.classList.remove('hidden');
+        });
+
+        userLogoutBtn.addEventListener('click', () => {
+            userPage.classList.add('hidden');
+            loginPage.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

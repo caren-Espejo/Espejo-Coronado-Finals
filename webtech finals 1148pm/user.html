@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Products</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('admin.png');
+            background-repeat: no-repeat;
+            color: #0a0a0a;
+            display: flex;
+            background-position: center;
+            background-attachment: fixed;
+            background-size: cover;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+        }
+
+        .form-container {
+            max-width: 1000px;
+            margin: 50px auto;
+            background-color: rgba(255, 255, 255, 0.9); /* Adjusted background color */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+        }
+
+        .btn-buttons {
+            background: #6e6241;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #333333;
+        }
+
+        .btn-primary {
+            background-color: #6e6241 !important; /* Override Bootstrap primary button color */
+            border-color: #6e6241 !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #333333 !important; /* Override hover effect */
+            border-color: #333333 !important;
+        }
+
+        .checkout-form {
+            display: none;
+        }
+
+        .checkout-form input {
+            margin-bottom: 10px;
+        }
+
+        .checkout-summary {
+            margin-top: 20px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="form-container">
+        <h2 class="text-center">Order Products</h2>
+
+        <div class="table-container">
+            <table class="table table-striped table-bordered mt-4" id="productTable">
+                <thead class="table-dark">
+                <tr>
+                    <th>Image</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Price (PHP)</th>
+                    <th>Quantity</th>
+                    <th>Order Quantity</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="checkout-form">
+            <h3 class="text-center">Checkout</h3>
+            <form id="checkoutForm">
+                <div class="mb-3">
+                    <label for="customerName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="customerName" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="customerMobile" class="form-label">Mobile Number</label>
+                    <input type="tel" class="form-control" id="customerMobile" pattern="[0-9]{11}"placeholder="12345678910" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="customerAddress" class="form-label">Address</label>
+                    <textarea class="form-control" id="customerAddress" rows="3" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Place Order</button>
+            </form>
+        </div>
+
+        <div class="cart-summary">
+            <h3 class="text-center">Cart</h3>
+            <ul id="cartItems"></ul>
+            <button class="btn btn-primary w-100 mt-3" id="proceedToCheckout">Proceed to Checkout</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const productTable = document.querySelector('#productTable tbody');
+    const checkoutForm = document.querySelector('.checkout-form');
+    const cartItemsList = document.getElementById('cartItems');
+    const proceedToCheckoutButton = document.getElementById('proceedToCheckout');
+
+    // Retrieve products from localStorage
+    const products = JSON.parse(localStorage.getItem('products') || '[]');
+
+    // Populate the table with products
+    products.forEach(product => {
+        const newRow = `
+            <tr>
+                <td><img src="${product.image}" class="product-image" alt="${product.name}"></td>
+                <td>${product.id}</td>
+                <td>${product.name}</td>
+                <td>${product.description}</td>
+                <td>${product.category}</td>
+                <td>₱${product.price.toFixed(2)}</td>
+                <td>${product.quantity}</td>
+                <td><input type="number" min="1" max="${product.quantity}" value="1" id="orderQuantity-${product.id}"></td>
+                <td><button class="btn btn-success" onclick="orderProduct('${product.id}')">Order</button></td>
+            </tr>`;
+        productTable.innerHTML += newRow;
+    });
+
+    function orderProduct(productId) {
+        const orderQuantity = document.getElementById(`orderQuantity-${productId}`).value;
+        const product = products.find(p => p.id === productId);
+
+        if (orderQuantity > product.quantity) {
+            alert('Order quantity exceeds available stock.');
+            return;
+        }
+
+        // Save ordered product to localStorage
+        const orderedProducts = JSON.parse(localStorage.getItem('orderedProducts') || '[]');
+        const existingProductIndex = orderedProducts.findIndex(p => p.id === productId);
+        if (existingProductIndex !== -1) {
+            orderedProducts[existingProductIndex].quantity += parseInt(orderQuantity);
+        } else {
+            orderedProducts.push({
+                ...product,
+                quantity: parseInt(orderQuantity),
+            });
+        }
+
+        localStorage.setItem('orderedProducts', JSON.stringify(orderedProducts));
+
+        // Update product quantity in localStorage
+        product.quantity -= parseInt(orderQuantity);
+        localStorage.setItem('products', JSON.stringify(products));
+
+        // Update cart summary
+        updateCartSummary();
+
+    }
+
+    function updateCartSummary() {
+        const orderedProducts = JSON.parse(localStorage.getItem('orderedProducts') || '[]');
+        cartItemsList.innerHTML = '';
+
+        orderedProducts.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${item.name} (x${item.quantity}) - ₱${(item.price * item.quantity).toFixed(2)}`;
+            listItem.innerHTML += ` <button class="btn btn-danger btn-sm" onclick="removeFromCart('${item.id}')">Remove</button>`;
+            cartItemsList.appendChild(listItem);
+        });
+    }
+
+    function removeFromCart(productId) {
+        const orderedProducts = JSON.parse(localStorage.getItem('orderedProducts') || '[]');
+        const index = orderedProducts.findIndex(p => p.id === productId);
+        if (index !== -1) {
+            orderedProducts.splice(index, 1);
+            localStorage.setItem('orderedProducts', JSON.stringify(orderedProducts));
+            updateCartSummary();
+        }
+    }
+
+    proceedToCheckoutButton.onclick = () => {
+    checkoutForm.style.display = 'block';
+    proceedToCheckoutButton.style.display = 'none'; // Hide the button after clicking
+};
+
+document.getElementById('checkoutForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const customerName = document.getElementById('customerName').value.trim();
+    const customerMobile = document.getElementById('customerMobile').value.trim();
+    const customerAddress = document.getElementById('customerAddress').value.trim();
+
+    // Fetch ordered products from localStorage
+    const orderedProducts = JSON.parse(localStorage.getItem('orderedProducts') || '[]');
+
+    // Prepare order summary
+    let orderSummary = '<strong>Order Summary:</strong><br><br>';
+    orderedProducts.forEach(item => {
+        orderSummary += `${item.name} (x${item.quantity}) - ₱${(item.price * item.quantity).toFixed(2)}<br>`;
+    });
+    orderSummary += `<br><strong>Customer Name:</strong> ${customerName}<br>`;
+    orderSummary += `<strong>Mobile:</strong> ${customerMobile}<br>`;
+    orderSummary += `<strong>Address:</strong> ${customerAddress}`;
+
+    // Set the order summary content in the modal
+    document.getElementById('orderSummaryContent').innerHTML = orderSummary;
+
+    // Clear cart and reset form
+    localStorage.removeItem('orderedProducts');
+    cartItemsList.innerHTML = '';
+    document.getElementById('checkoutForm').reset();
+    checkoutForm.style.display = 'none';
+
+    // Show the modal
+    const orderSummaryModal = new bootstrap.Modal(document.getElementById('orderSummaryModal'));
+    orderSummaryModal.show();
+
+    // Show the Proceed to Checkout button again after the modal is closed
+    orderSummaryModal._element.addEventListener('hidden.bs.modal', function () {
+        proceedToCheckoutButton.style.display = 'block'; // Show the button again
+    });
+});
+
+    // Clear cart items when page is refreshed
+    window.addEventListener('beforeunload', () => {
+        localStorage.removeItem('orderedProducts');
+    });
+
+    // Load cart summary on page load
+    updateCartSummary();
+</script>
+
+<!-- Modal -->
+<div class="modal fade" id="orderSummaryModal" tabindex="-1" aria-labelledby="orderSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderSummaryModalLabel">Order Summary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderSummaryContent">
+                <!-- Order summary will be injected here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+</body>
+</html>

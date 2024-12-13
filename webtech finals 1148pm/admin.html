@@ -1,0 +1,321 @@
+ <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add New Product</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            body {
+                background-image: url('admin.png');
+                background-repeat: no-repeat;
+                color: #0a0a0a;
+                display: flex;
+                background-position: center;
+                background-attachment: fixed;
+                background-size: cover;
+                justify-content: center;
+                align-items: center;
+                margin: 0;
+            }
+
+            .form-container {
+                 max-width: 100%; /* Allow full width on small screens */
+                 margin: 20px; /* Add some margin for spacing */
+                 background-color: rgba(255, 255, 255, 0.781);
+                 padding: 30px;
+                border-radius: 8px;
+                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+            table {
+                margin-top: 30px;
+            }
+
+            .error {
+                color: red;
+                font-size: 0.875em;
+            }
+
+            .product-image {
+                width: 50px;
+                height: 50px;
+                object-fit: cover;
+            }
+
+            .btn-primary {
+            background: #6e6241;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+            }
+
+            .btn-primary:hover {
+                background: #333333;
+            }
+
+        </style>
+    </head>
+
+    <body>
+    
+        <div class="container">
+            <div class="form-container">
+                <h2 class="text-center">Add New Product</h2>
+                <form id="productForm">
+                    <div class="mb-3">
+                        <label for="productId" class="form-label">Product ID</label>
+                        <input type="text" class="form-control" id="productId" maxlength="20" pattern="[a-zA-Z0-9]{1,20}" required>
+                        <small class="error" id="idError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productName" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="productName" maxlength="20" pattern="[a-zA-Z]{1,20}" required>
+                        <small class="error" id="nameError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productDescription" class="form-label">Product Description</label>
+                        <textarea class="form-control" id="productDescription" rows="3" maxlength="50" pattern="[a-zA-Z0-9\s]{1,50}" required></textarea>
+                        <small class="error" id="descriptionError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productCategory" class="form-label">Product Category</label>
+                        <select class="form-select" id="productCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="Flat Bread">Flat Bread</option>
+                            <option value="Yeast Bread">Yeast Bread</option>
+                            <option value="Quick Bread">Quick Bread</option>
+                            <option value="Dry Bread">Dry Bread</option>
+                            <option value="New Category">New Category</option>
+                        </select>
+                        <small class="error" id="categoryError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newCategory" class="form-label">Add New Category</label>
+                        <input type="text" class="form-control" id="newCategory" placeholder="Enter new category" maxlength="20">
+                        <small class="error" id="newCategoryError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productPrice" class="form-label">Product Price (PHP)</label>
+                        <input type="text" class="form-control" id="productPrice" required>
+                        <small class="error" id="priceError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productQuantity" class="form-label">Product Quantity</label>
+                        <input type="text" class="form-control" id="productQuantity" pattern="[0-9]+" required>
+                        <small class="error" id="quantityError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productImage" class="form-label">Product Image</label>
+                        <input type="file" class="form-control" id="productImage" accept="image/*" required>
+                        <small class="error" id="imageError"></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="productCeiling" class="form-label">Product Ceiling</label>
+                        <input type="text" class="form-control" id="productCeiling" value="200" readonly>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Add Product</button>
+                </form>
+
+                <table class="table table-striped table-bordered mt-4" id="productTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Image</th>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Price (PHP)</th>
+                            <th>Quantity</th>
+                            <th>Ceiling</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            function saveProductsToLocalStorage(products) {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        function loadProductsFromLocalStorage() {
+            return JSON.parse(localStorage.getItem('products') || '[]');
+        }
+
+        function deleteProduct(productId) {
+            const products = loadProductsFromLocalStorage();
+            const updatedProducts = products.filter(p => p.id !== productId);
+            saveProductsToLocalStorage(updatedProducts);
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const tableBody = document.querySelector('#productTable tbody');
+            tableBody.innerHTML = ''; // Clear existing rows
+            const products = loadProductsFromLocalStorage();
+
+            products.forEach(product => {
+                const newRow = `
+                    <tr data-id="${product.id}">
+                        <td><img src="${product.image || 'placeholder.png'}" class="product-image" alt="${product.name}"></td>
+                        <td>${product.id}</td>
+                        <td>${product.name}</td>
+                        <td>${product.description}</td>
+                        <td>${product.category}</td>
+                        <td>₱${product.price.toFixed(2)}</td>
+                        < <td>${product.quantity}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                        </td>
+                    </tr>`;
+                tableBody.innerHTML += newRow;
+            });
+        }
+
+            const form = document.getElementById('productForm');
+            const productTable = document.querySelector('#productTable tbody');
+            const categorySelect = document.getElementById('productCategory');
+            const newCategoryInput = document.getElementById('newCategory');
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const id = document.getElementById('productId').value.trim();
+                const name = document.getElementById('productName').value.trim();
+                const description = document.getElementById('productDescription').value.trim();
+                const category = categorySelect.value || newCategoryInput.value.trim();
+                const price = document.getElementById('productPrice').value.trim();
+                const quantity = document.getElementById('productQuantity').value.trim();
+                const ceiling = document.getElementById('productCeiling').value;
+                const imageInput = document.getElementById('productImage');
+                const imageFile = imageInput.files[0];
+
+            function deleteProduct(productId) {
+            const products = loadProductsFromLocalStorage();
+            const updatedProducts = products.filter(p => p.id !== productId);
+            saveProductsToLocalStorage(updatedProducts);
+
+            // Remove the row from the table
+            const row = document.querySelector(`tr[data-id="${productId}"]`);
+            if (row) {
+                row.remove();
+            }
+        }
+
+                // Validation
+                let isValid = true;
+
+                if (!/^[a-zA-Z0-9]{1,20}$/.test(id)) {
+                    isValid = false;
+                    document.getElementById('idError').textContent = 'Product ID must be alphanumeric (max 20 characters).';
+                } else {
+                    document.getElementById('idError').textContent = '';
+                }
+
+                if (!/^[a-zA-Z]{1,20}$/.test(name)) {
+                    isValid = false;
+                    document.getElementById('nameError').textContent = 'Product name must contain only letters (max 20 characters).';
+                } else {
+                    document.getElementById('nameError').textContent = '';
+                }
+
+                if (!/^[a-zA-Z0-9\s]{1,50}$/.test(description)) {
+                    isValid = false;
+                    document.getElementById('descriptionError').textContent = 'Description must be alphanumeric (max 50 characters).';
+                } else {
+                    document.getElementById('descriptionError').textContent = '';
+                }
+
+                if (!category) {
+                    isValid = false;
+                    document.getElementById('categoryError').textContent = 'Please select or enter a category.';
+                } else {
+                    document.getElementById('categoryError').textContent = '';
+                }
+
+                if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(price)) {
+                    isValid = false;
+                    document.getElementById('priceError').textContent = 'Price must be a valid monetary figure.';
+                } else {
+                    document.getElementById('priceError').textContent = '';
+                }
+
+                if (!/^[0-9]+$/.test(quantity)) {
+                    isValid = false;
+                    document.getElementById('quantityError').textContent = 'Quantity must be numeric.';
+                } else {
+                    document.getElementById('quantityError').textContent = '';
+                }
+
+                if (!imageFile) {
+                    isValid = false;
+                    document.getElementById('imageError').textContent = 'Please upload an image.';
+                } else {
+                    document.getElementById('imageError').textContent = '';
+                }
+
+                if (isValid) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        const formattedPrice = parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const formattedQuantity = parseInt(quantity).toLocaleString('en-US');
+                        const formattedCeiling = parseFloat(ceiling).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                        const newRow = `
+                            <tr>
+                                <td><img src="${event.target.result}" class="product-image" alt="${name}"></td>
+                                <td>${id}</td>
+                                <td>${name}</td>
+                                <td>${description}</td>
+                                <td>${category}</td>
+                                <td>₱${formattedPrice}</td>
+                                <td>${formattedQuantity}</td>
+                                <td>₱${formattedCeiling}</td>
+                                <td>
+                                    
+
+                                    <button class="btn btn-danger" onclick="deleteProduct('${id}')">Delete</button>
+                                    
+                                    </td>
+                            </tr>`;
+
+                        productTable.innerHTML += newRow;
+
+                        // Save product to localStorage
+                        const products = JSON.parse(localStorage.getItem('products') || '[]');
+                        products.push({
+                            id,
+                            name,
+                            description,
+                            category,
+                            price: parseFloat(price),
+                            quantity: parseInt(quantity),
+                            ceiling: parseFloat(ceiling),
+                            image: event.target.result,
+                        });
+                        localStorage.setItem('products', JSON.stringify(products));
+
+                        form.reset(); // Reset form
+                        categorySelect.value = ""; // Reset category select
+                        newCategoryInput.value = ""; // Reset new category input
+                    };
+                    reader.readAsDataURL(imageFile);
+                }
+            });
+        </script>
+    </body>
+
+    </html>
